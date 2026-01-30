@@ -1,6 +1,23 @@
 # Supervisor container for navigator
 # Multi-stage build for smaller final image
 
+# Stage 1: Rust builder
+FROM rust:1.85-slim AS rust-builder
+
+# Install build dependencies for protobuf-src
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake \
+    g++ \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY Cargo.toml Cargo.lock ./
+COPY crates/ crates/
+COPY proto/ proto/
+RUN cargo build --release --package navigator-sandbox
+
+# Stage 2: Python base
 FROM python:3.12-slim AS base
 
 # Set environment variables
@@ -14,17 +31,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Build stage for dependencies
+# Stage 3: Python dependencies builder
 FROM base AS builder
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
-# Copy dependency files
-# COPY pyproject.toml uv.lock* ./
 
 # Install dependencies into a virtual environment
 RUN uv venv /app/.venv && \
     uv sync --frozen --no-dev --no-install-project 2>/dev/null || \
     uv sync --no-dev --no-install-project 2>/dev/null || true
 
+# Stage 4: Final image
+FROM base AS final
+
+# Copy Python virtual environment and uv
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
+
+# Copy navigator-sandbox binary from Rust builder
+COPY --from=rust-builder /build/target/release/navigator-sandbox /usr/local/bin/
+
+# Add venv to PATH
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Set navigator-sandbox as the entrypoint
+ENTRYPOINT ["navigator-sandbox"]

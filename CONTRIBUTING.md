@@ -95,6 +95,36 @@ mise run sandbox         # Run sandbox
 
 Run `mise run all` before committing to check everything.
 
+## Commit Messages
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/). All commit messages must follow the format:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Types:**
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation only
+- `chore` - Maintenance tasks (dependencies, build config)
+- `refactor` - Code change that neither fixes a bug nor adds a feature
+- `test` - Adding or updating tests
+- `ci` - CI/CD changes
+- `perf` - Performance improvements
+
+**Examples:**
+```
+feat(cli): add --verbose flag to nav run
+fix(sandbox): handle timeout errors gracefully
+docs: update installation instructions
+chore(deps): bump tokio to 1.40
+```
+
 ## Pull Requests
 
 1. Create a feature branch from `main`

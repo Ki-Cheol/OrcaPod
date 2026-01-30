@@ -114,8 +114,9 @@ run = "cargo run -p navigator-cli --"
 # ============================================================================
 
 [tasks.sandbox]
-description = "Build the sandbox and drop into an interactive shell"
-run = "cargo build -p navigator-sandbox && cargo run -p navigator-sandbox -- -i $SHELL"
+description = "Run the sandbox container with an interactive shell"
+depends = ["docker:build:factory"]
+run = "docker run -it navigator-factory -i /bin/bash"
 
 # ============================================================================
 # Development Tasks
